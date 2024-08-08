@@ -2,7 +2,10 @@
   "name": "y",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "scripts": {
+    "start": "bun src/server.js",
+    "dev": "nodemon src/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -10,6 +13,7 @@
   "description": "",
   "dependencies": {
     "express": "^4.19.2",
+    "nodemon": "^3.1.4",
     "socket.io": "^4.7.5"
   }
 }
