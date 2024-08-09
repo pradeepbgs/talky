@@ -1,53 +1,59 @@
-const messages = {};
+import redisService from "./redisService";
+
 
 export default function WebSocketService(io) {
-  let users = {};
 
   io.on("connection", (socket) => {
-    console.log(socket.id);
     console.log("new socket connection..!", socket.id);
-    socket.on("register", (user_id) => {
-      users[user_id] = socket.id;
-      
-      if (messages[user_id]) {
-        messages[user_id].forEach(message => {
-            socket.emit("recieveMessage", message);
-        });
-        delete messages[user_id];
-      } {
-        
-      }
+
+    socket.on("register", async (user_id) => {
+
+      await redisService.setUserSocket(user_id,socket.id);
+      await redisService.subscribeToChannel(`channel:${user_id}`);
+
+      redisService.onMessage((channel,message) =>{
+        if (channel === `channel:${user_id}`) {
+          socket.emit("recieveMessage", JSON.parse(message));
+        }
+      })
+
+      const offileUserMessages = await redisService.getQueuedMessages(user_id)
+
+      if (offileUserMessages.length > 0) {
+        console.log("User has offline messages");
+        for (const message of offlineMessages) {
+          socket.emit("recieveMessage", JSON.parse(message));
+        }
+        await redisService.removeQueueMessages(user_id);
+      } 
     });
 
-    socket.on("sendMessage", (messageData) => {
+    socket.on("sendMessage", async (messageData) => {
       const { messageText, senderId, receiverId } = messageData;
 
       const message = { text: messageText, senderId: senderId };
 
-      const receiverSocketId = users[receiverId];
+      await redisService.queueMessage(receiverId,message)
+
+      const receiverSocketId = await redisService.getUserSocket(receiverId)
       try {
         if (receiverSocketId) {
-          socket.to(receiverSocketId).emit("recieveMessage", message);
+          await redisService.publishMessage(`channel:${receiverId}`, message)
+          await redisService.removeQueueMessages(receiverId)
         } else {
-          console.log("User is not online");
-          if (!messages[receiverId]) {
-            messages[receiverId] = []; // Initialize an array if not already present
-          }
-
-          messages[receiverId].push(message);
+          console.log("User is not online, storing message for later");
         }
       } catch (error) {
         console.log(error);
-        // or we can emit an error event to the client to handle the error
         socket.emit("error", "Failed to send message");
       }
     });
 
-    socket.on("disconnect", () => {
-      const userId = Object.keys(users).find((key) => users[key] === socket.id);
-      if (userId) {
-        delete users[userId];
-        console.log(`${userId} has disconnected`);
+    socket.on("disconnect", async () => {
+      const user = await redisService.findUserBySocketId(socket.id)
+      if (user) {
+        await redisService.deleteUserSocket(user);
+        console.log(`${user} has disconnected`);
       }
     });
   });
