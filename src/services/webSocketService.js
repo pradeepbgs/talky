@@ -1,4 +1,4 @@
-import redisService from "./redisService";
+import redisService from "./redisService.js";
 
 
 export default function WebSocketService(io) {
@@ -17,14 +17,14 @@ export default function WebSocketService(io) {
         }
       })
 
-      const offileUserMessages = await redisService.getQueuedMessages(user_id)
+      const offlineUserMessages = await redisService.getQueuedMessages(user_id)
 
-      if (offileUserMessages.length > 0) {
+      if (offlineUserMessages.length > 0) {
         console.log("User has offline messages");
-        for (const message of offlineMessages) {
+        for (const message of offlineUserMessages) {
           socket.emit("recieveMessage", JSON.parse(message));
         }
-        await redisService.removeQueueMessages(user_id);
+        await redisService.removeAllQueueMessagesOfUser(user_id);
       } 
     });
 
@@ -39,7 +39,7 @@ export default function WebSocketService(io) {
       try {
         if (receiverSocketId) {
           await redisService.publishMessage(`channel:${receiverId}`, message)
-          await redisService.removeQueueMessages(receiverId)
+          await redisService.removeAllQueueMessagesOfUser(receiverId)
         } else {
           console.log("User is not online, storing message for later");
         }
@@ -53,6 +53,7 @@ export default function WebSocketService(io) {
       const user = await redisService.findUserBySocketId(socket.id)
       if (user) {
         await redisService.deleteUserSocket(user);
+        await redisService.unsubscribeChannel(`channel:${user_id}`);
         console.log(`${user} has disconnected`);
       }
     });

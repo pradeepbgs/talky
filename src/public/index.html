@@ -7,30 +7,34 @@
 </head>
 <body>
     <h1>WebSocket Test</h1>
+    <label for="">userid</label>
+    <input type="number" id="userId">
+    <label for="">receiverId</label>
+    <input type="text" id="receiverId">
+    <h2></h2>
     <input type="text" id="input" placeholder="Enter your message">
     <button id="btn">Send</button>
     
     <div id="messages">
-      can you see messages
-    </div> <!-- Container to display received messages -->
+        can you see messages
+    </div> 
+    <!-- Container to display received messages -->
 
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script>
         const btn = document.getElementById('btn');
         const input = document.getElementById('input');
         const messagesDiv = document.getElementById('messages');
+        const userId = document.getElementById('userId')
+        const receiverId = document.getElementById('receiverId')
         const socket = io();
 
         // User ID for this browser (change this value for testing)
-        const userId = prompt("Enter your user ID (e.g., 1 or 2)");
-
         // Register the user
         socket.emit('register', userId);
 
         btn.addEventListener('click', () => {
-            const messageText = input.value;
-            const receiverId = prompt("Enter the receiver's user ID (e.g., 1 or 2)");
-            
+            const messageText = input.value;            
             // Clear the input field after sending the message
             input.value = '';
 

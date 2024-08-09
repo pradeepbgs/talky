@@ -1,8 +1,10 @@
-import { redis } from "../redis";
+import { redis ,redisSubscriber} from "../redis.js";
+
 
  class redisService {
     constructor(){
         this.redis = redis
+        this.redisSubscriber = redisSubscriber
     }
 
     async setUserSocket(user_id,socket_id){
@@ -21,16 +23,21 @@ import { redis } from "../redis";
         return await this.redis.lrange(`messages:${userId}`, 0, -1);
     }
 
-    async removeQueueMessages(user_id){
-        await this.redis.lpop(`messages:${user_id}`)
+    
+    async removeAllQueueMessagesOfUser(user_id) {
+      await this.redis.del(`messages:${user_id}`);
     }
 
     async subscribeToChannel(channel) {
-        await this.redis.subscribe(channel);
+        await this.redisSubscriber.subscribe(channel);
+      }
+
+      async unsubscribeChannel(channel){
+        await this.redisSubscriber.unsubscribe(channel)
       }
 
       onMessage(callback) {
-        this.redis.on('message', callback);
+        this.redisSubscriber.on('message', callback);
       }
 
       async publishMessage(channel, message) {
@@ -45,7 +52,7 @@ import { redis } from "../redis";
         const keys = await this.redis.keys('user:*');
         for (const key of keys) {
           const id = await this.redis.get(key);
-          if (id === socketId) {
+          if (id === socket_id) {
             return key.split(':')[1]; 
           }
         }
