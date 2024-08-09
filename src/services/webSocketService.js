@@ -10,7 +10,7 @@ export default function WebSocketService(io) {
 
       await redisService.setUserSocket(user_id,socket.id);
       await redisService.subscribeToChannel(`channel:${user_id}`);
-
+      console.log('a new user register',user_id)
       redisService.onMessage((channel,message) =>{
         if (channel === `channel:${user_id}`) {
           socket.emit("recieveMessage", JSON.parse(message));

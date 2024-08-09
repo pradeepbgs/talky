@@ -11,6 +11,7 @@
     <input type="number" id="userId">
     <label for="">receiverId</label>
     <input type="text" id="receiverId">
+    <button type="button" id="register">register</button>
     <h2></h2>
     <input type="text" id="input" placeholder="Enter your message">
     <button id="btn">Send</button>
@@ -23,15 +24,18 @@
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script>
         const btn = document.getElementById('btn');
-        const input = document.getElementById('input');
+        const inputs = document.getElementById('input');
         const messagesDiv = document.getElementById('messages');
         const userId = document.getElementById('userId')
         const receiverId = document.getElementById('receiverId')
+        const registerBtn = document.getElementById('register')
         const socket = io();
 
         // User ID for this browser (change this value for testing)
         // Register the user
-        socket.emit('register', userId);
+        registerBtn.addEventListener('click',() =>{
+            socket.emit('register', userId.value);
+        })
 
         btn.addEventListener('click', () => {
             const messageText = input.value;            
@@ -41,15 +45,15 @@
             // Send message to the server
             socket.emit('sendMessage', {
                 messageText,
-                senderId: userId,
-                receiverId
+                senderId: userId.value,
+                receiverId:receiverId.value
             });
         });
 
         // Listen for incoming messages
         socket.on('recieveMessage', (message) => {
             const messageElement = document.createElement('p');
-            console.log("do you see message")
+            console.log("do you see messages",JSON.stringify(message))
             messageElement.textContent = `Message from User ${message.senderId}: ${message.text}`;
             messagesDiv.appendChild(messageElement);
         });
