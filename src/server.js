@@ -15,11 +15,13 @@ app.use(express.static(path.resolve('./src/public')))
 /// here we will define our midlle for routes
 import router from './routes/user.routes.js'
 import connectDB from './config/dbconfig.js'
+import webRtcService from './services/webRtcService.js'
 
 app.use('/api/user',router)
 
 
 WebSocketService(io)
+webRtcService(io);
 
 app.get('/', (req, res) => {
     res.sendFile(path.resolve('./public/index.html'))
